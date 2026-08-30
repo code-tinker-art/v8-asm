@@ -1,0 +1,13 @@
+{
+  "name": "v8-asm",
+  "version": "1.0.0",
+  "main": "main.js",
+  "type": "module",
+  "scripts": {
+    "test": "node main.js test.v8asm"
+  },
+  "keywords": [],
+  "author": "S.S.Magizhnun",
+  "license": "MIT",
+  "description": "A high-level assembly like language interpreted by nodeJS"
+}

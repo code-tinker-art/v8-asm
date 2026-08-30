@@ -1,0 +1,27 @@
+﻿; fibonacci sequence builder in v8-asm
+
+.section_data
+	limit =100
+	endMessage = "Finished fibonnaci sequence building\n\n\tBecome a contributor to this project at https://www.gtihub.com/code-tinker-art/v8-asm\n"
+
+.global_start
+	MOV R1, 0
+	MOV R2, 1
+	MOV R3, 0
+	MOV R4, 0 ; counter
+
+	LOOP_START:
+	CMPR limit, R4
+	JMPE LOOP_END
+
+	PRINT R1
+	ADD R3, R1, R2
+	MOV R1, R2
+	MOV R2, R3
+
+	INCR R4
+	JMP LOOP_START
+
+LOOP_END:
+	PRINT endMessage
+	HLT
