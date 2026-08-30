@@ -1,92 +1,99 @@
-# v8-asm — A playful high-level assembly for Node.js
+# v8-asm — Playful, readable high-level assembly for Node.js
 
-Welcome to v8-asm — an upbeat, high-level, assembly-like language interpreted on Node.js.
+Welcome to v8-asm — a compact, high-level assembly-like language interpreted in Node.js. This README now reflects the actual layout of the repository (look in ./src) and gives quick, accurate instructions for running and contributing.
 
-If you love tinkering with languages, playful runtimes, and tiny interpreters, you're in the right place. This repo is built to be approachable, hackable, and fun — and we want your energy, ideas, and PRs.
+If you like small interpreters, assembly-inspired syntax, and playful runtimes, you belong here. We try to stay friendly, curious, and contribution-ready — the Cody vibes.
 
-Why this project exists
+Project layout (what actually exists)
 
-- v8-asm is a small language inspired by assembly but with a higher-level, friendly syntax so humans (and bots like Cody) can read and reason about it.
-- It's a perfect playground for learning how interpreters work, experimenting with code generation ideas, or building little VMs.
+- src/v8-asm.js — the public entrypoint: exports default function compile(fileName). This reads a source file, tokenizes, parses, and executes it.
+- src/lexer.js — tokenizer: converts plain text into tokens the parser understands.
+- src/parser.js — parser: converts tokens into an AST of directives, labels, and instructions.
+- src/executor.js — executor/VM: implements registers, memory, labels, instructions and runtime behavior.
+- src/config.js — constants: token enums, supported instructions, memory size, number of registers.
 
-What you'll find here
+There is no `bin/run.js` or `lib/` directory in this repo — earlier README references were inaccurate. Sorry about that; this one is accurate.
 
-- A concise JavaScript interpreter that parses and runs v8-asm programs.
-- Example programs in the examples/ folder to show off language features.
-- A tiny test harness so you can try changes and see the results instantly.
+Quick start — run an example without changing package.json
 
-Quick start (3 minutes)
+If you don't have a package.json that sets "type": "module", you can still invoke the ESM entrypoint from Node using a dynamic import:
 
-1. Clone:
+1. Ensure you have Node 16+ installed.
+2. Add a small example file at `examples/hello.asm` (see "Examples" below) or create one.
+3. Run this one-liner from the project root:
 
-   git clone https://github.com/code-tinker-art/v8-asm.git
-   cd v8-asm
+   node -e "import('./src/v8-asm.js').then(m => m.default('examples/hello.asm')).catch(e => { console.error(e); process.exit(1); })"
 
-2. Install:
+If your project has package.json, add "type": "module" and add a script for convenience:
 
-   npm install
+  {
+    "type": "module",
+    "scripts": {
+      "run:example": "node -e \"import('./src/v8-asm.js').then(m => m.default('examples/hello.asm'))\""
+    }
+  }
 
-3. Run the included example:
+Or create a tiny CLI helper file (recommended):
 
-   node bin/run.js examples/hello.asm
+- bin/run.js
+  ```js
+  // bin/run.js
+  import compile from '../src/v8-asm.js';
+  const file = process.argv[2];
+  if (!file) { console.error('Usage: node bin/run.js <file.asm>'); process.exit(1); }
+  compile(file);
+  ```
 
-You should see output from the interpreter. Tweak examples/hello.asm and rerun to play.
+Examples
 
-Read the code — it's friendly
+This repo doesn't ship examples yet. Great first task: add `examples/hello.asm` with a few lines that exercise PRINT, variables and a label. Example suggestion you can add in a PR:
 
-- Interpreter: lib/interpreter.js — where tokens become actions and actions become runtime behavior.
-- Parser: lib/parser.js — small and readable; great first place to jump in.
-- CLI runner: bin/run.js — how programs get loaded and executed.
+    .section_data
+    greeting = "Hello, v8-asm!"
+    .global_start
+    start:
+      PRINT greeting
+      HLT
 
-Jumping in suggestions (best first PRs)
+Reading the code (where to start)
 
-- Add more example programs (examples/).
-- Improve error messages and line/column reporting in the parser.
-- Implement a small optimizer or bytecode emitter.
-- Add a test that covers edge cases (division by zero, invalid opcodes, stack underflow).
+- Start with src/lexer.js to see how tokens are produced from text. It's compact and easy to follow.
+- Move to src/parser.js to learn how tokens become AST nodes: labels, directives, variables, and instructions.
+- Finally open src/executor.js — that's where runtime behavior (registers, memory, opcodes like MOV/ADD/PRINT) lives.
 
-How to contribute (we want you!)
+Accurate implementation notes
 
-1. Fork the repo and create a feature branch: feature/your-idea.
-2. Keep changes small and focused — each PR should do one thing.
-3. Add or update an example or test demonstrating the change.
-4. Open a Pull Request with a short description and what you changed.
+- The language uses directives like `.section_data` and `.global_start`.
+- Variable assignments are of the form `name = 123` or `name = "text"`. String variables are stored into the VM's memory and referenced by address.
+- Registers are named `R0`, `R1`, etc. The number of registers and memory size are defined in `src/config.js`.
+- Supported opcodes are declared in `INSTRUCTIONS` in `src/config.js`. Add new opcodes by implementing behavior in `src/executor.js` and adding the mnemonic to the set.
 
-Code of conduct
+Suggested first PRs (good, bite-sized tasks)
 
-Be kind, respectful, and patient. We want contributors of all backgrounds.
+- Add three example programs under examples/: hello.asm, math.asm, factorial.asm.
+- Add a `bin/run.js` CLI helper (like the snippet above) so running is one command: `node bin/run.js examples/hello.asm`.
+- Add tests that run examples and assert expected stdout (a tiny test runner or a mocha/jest wrapper).
+- Improve lexer/parser error messages to include line/column numbers.
+- Add a CONTRIBUTING.md and issue/PR templates to help onboard new contributors.
 
-Development notes for maintainers and curious tinkerers
+How to contribute
 
-- Run unit examples with: npm test (or node bin/run.js tests/some-test.asm)
-- Run linter (if configured): npm run lint
-- Add new opcodes in: lib/opcodes.js (or the file that maps mnemonic -> implementation)
+1. Fork the repo and create a branch: `feature/your-idea`.
+2. Keep PRs focused and small.
+3. Include an example or a test that demonstrates the change.
+4. Open a PR and explain why the change helps newcomers or makes the VM more fun to hack.
 
-Testing and quality
+Community and tone
 
-We love reproducible examples. If you add a feature, include:
-- A new example in examples/ demonstrating the feature.
-- A test (if there's a test harness) that runs the example and asserts expected stdout.
-
-Want to learn by reading?
-
-- Start in lib/parser.js — the parser is intentionally compact so it's a gentle read.
-- Then inspect lib/interpreter.js to follow how parsed nodes become executed behavior.
-
-Ideas for expansion
-
-- Add a REPL: interactive mode to type commands and get results immediately.
-- Add debugging info: show stack traces in v8-asm terms.
-- Compile to a tiny bytecode format for faster execution.
-
-Got questions or want mentorship?
-
-Open an issue titled "Help me get started" and include what you're excited about. Maintainers and friendly contributors will help pair on a first issue.
+Be kind, curious, and helpful. We celebrate small wins and good explanations. If you're new to interpreters, open an issue asking "Help me get started" and say what you want to learn — someone will pair with you.
 
 License
 
-This project is MIT-licensed. See LICENSE for details.
+This project is MIT licensed. See LICENSE.
 
-Thanks for stopping by
+What's next (if you want help)
 
-If this repo made you smile, consider starring it — and better yet, open a small PR. Cody vibes: curious, kind, and collaborative — let's build something playful together.
+- I can add the recommended `examples/hello.asm` and a `bin/run.js` helper in a follow-up commit.
+- I can add a CONTRIBUTING.md and a tiny test that runs examples/hello.asm and asserts output.
+
+Tell me which follow-ups you want and I'll open a PR with the changes.
