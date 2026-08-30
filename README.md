@@ -1,12 +1,12 @@
 # v8-asm — Tiny VM, big vibes
 
-v8-asm is a compact, high-level assembly-like language with a tiny VM implemented in Node.js. It’s small, readable, and built for playing — learn, tinker, and ship tiny ideas fast.
+v8-asm is a compact, high-level assembly-like language implemented in Node.js. It’s small, readable, and built for playing — learn, tinker, and give you low level vibes fast.
 
 What we built
 - src/v8-asm.js — the ESM entrypoint (compile(file)).
 - src/lexer.js — tokenizer.
 - src/parser.js — parser -> AST.
-- src/executor.js — the VM: registers, memory, stack, and instruction set.
+- src/executor.js — registers, memory, stack, and instruction set.
 - src/config.js — constants and instruction list.
 
 Quick run (one-liner)
