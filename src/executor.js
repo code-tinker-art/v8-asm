@@ -13,7 +13,7 @@ export class Executor {
         this.labels = {};
         this.instructions = [];
         this.stack = [];
-        this.registerStack = []; // Stack to preserve register values when entering/exiting scopes
+        this.registerStack = []; // Stack to preserve register values for function scopes only
         this.halted = false;
         this.equalFlag = false;
 
@@ -55,16 +55,16 @@ export class Executor {
     }
 
     /**
-     * Saves all register values to the register stack
-     * Call this when entering a label scope
+     * Saves all register values to the register stack (for function scope isolation)
+     * Call this when entering a function via CALL
      */
     pushRegisters() {
         this.registerStack.push([...this.registers]);
     }
 
     /**
-     * Restores all register values from the register stack
-     * Call this when returning from a label scope
+     * Restores all register values from the register stack (for function scope isolation)
+     * Call this when returning from a function via RET
      */
     popRegisters() {
         if (this.registerStack.length === 0) {
@@ -74,7 +74,8 @@ export class Executor {
     }
 
     /**
-     * Resets all registers to 0 for clean label scope
+     * Resets all registers to 0 for clean function scope
+     * Call this after CALL instruction
      */
     resetRegisters() {
         this.registers.fill(0);
@@ -99,7 +100,8 @@ export class Executor {
     setValue(operand, value) {
         if (typeof operand === "string") {
             if (operand.startsWith("R") && !isNaN(operand.slice(1))) {
-                this.registers[parseInt(parseInt(operand.slice(1)))] = value;
+                // BUG FIX #2: Remove double parseInt() - only parse once
+                this.registers[parseInt(operand.slice(1))] = value;
                 return;
             } else if (this.variables[operand] !== undefined) {
                 const addr = this.variables[operand];
@@ -189,24 +191,20 @@ export class Executor {
                 this.equalFlag = (this.resolveValue(operands[0]) === this.resolveValue(operands[1]));
                 break;
             case "JMP":
-                // Preserve registers before jumping to label
-                this.pushRegisters();
-                this.resetRegisters();
+                // BUG FIX #3 & #4: JMP does NOT preserve/reset registers
+                // JMP is for loops and simple jumps - registers should persist
+                // Only CALL/RET should handle register scope isolation
                 this.pc = this.labels[operands[0]];
                 break;
             case "JMPE":
+                // BUG FIX #3 & #4: Conditional jumps also preserve register state
                 if (this.equalFlag) {
-                    // Preserve registers before jumping to label
-                    this.pushRegisters();
-                    this.resetRegisters();
                     this.pc = this.labels[operands[0]];
                 }
                 break;
             case "JMPNE":
+                // BUG FIX #3 & #4: Conditional jumps also preserve register state
                 if (!this.equalFlag) {
-                    // Preserve registers before jumping to label
-                    this.pushRegisters();
-                    this.resetRegisters();
                     this.pc = this.labels[operands[0]];
                 }
                 break;
@@ -218,15 +216,15 @@ export class Executor {
                 this.setValue(operands[0], this.stack.pop());
                 break;
             case "CALL":
+                // CALL preserves and resets registers for function scope isolation
                 this.stack.push(this.pc);
-                // Preserve registers before calling label
                 this.pushRegisters();
                 this.resetRegisters();
                 this.pc = this.labels[operands[0]];
                 break;
             case "RET":
+                // RET restores registers when returning from function scope
                 if (this.stack.length === 0) throw new Error("Runtime Error: Stack Underflow on RET");
-                // Restore registers when returning from label
                 this.popRegisters();
                 this.pc = this.stack.pop();
                 break;
