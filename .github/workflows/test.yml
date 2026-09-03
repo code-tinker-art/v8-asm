@@ -29,7 +29,7 @@ jobs:
       run: node main.js tests/register-preservation.v8-asm
     
     - name: Run nested label test
-      run: node main.js tests/nested-labels.v8asm
+      run: node main.js tests/nested-labels.v8-asm
     
     - name: Run stack operations test
-      run: node main.js tests/stack-operations.v8asm
+      run: node main.js tests/stack-operations.v-8asm
