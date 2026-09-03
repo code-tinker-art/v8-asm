@@ -13,6 +13,7 @@ export class Executor {
         this.labels = {};
         this.instructions = [];
         this.stack = [];
+        this.registerStack = []; // Stack to preserve register values when entering/exiting scopes
         this.halted = false;
         this.equalFlag = false;
 
@@ -51,6 +52,32 @@ export class Executor {
                 instructionIndex++;
             }
         }
+    }
+
+    /**
+     * Saves all register values to the register stack
+     * Call this when entering a label scope
+     */
+    pushRegisters() {
+        this.registerStack.push([...this.registers]);
+    }
+
+    /**
+     * Restores all register values from the register stack
+     * Call this when returning from a label scope
+     */
+    popRegisters() {
+        if (this.registerStack.length === 0) {
+            throw new Error("Runtime Error: Register stack underflow");
+        }
+        this.registers = this.registerStack.pop();
+    }
+
+    /**
+     * Resets all registers to 0 for clean label scope
+     */
+    resetRegisters() {
+        this.registers.fill(0);
     }
 
     resolveValue(operand) {
@@ -162,13 +189,26 @@ export class Executor {
                 this.equalFlag = (this.resolveValue(operands[0]) === this.resolveValue(operands[1]));
                 break;
             case "JMP":
+                // Preserve registers before jumping to label
+                this.pushRegisters();
+                this.resetRegisters();
                 this.pc = this.labels[operands[0]];
                 break;
             case "JMPE":
-                if (this.equalFlag) this.pc = this.labels[operands[0]];
+                if (this.equalFlag) {
+                    // Preserve registers before jumping to label
+                    this.pushRegisters();
+                    this.resetRegisters();
+                    this.pc = this.labels[operands[0]];
+                }
                 break;
             case "JMPNE":
-                if (!this.equalFlag) this.pc = this.labels[operands[0]];
+                if (!this.equalFlag) {
+                    // Preserve registers before jumping to label
+                    this.pushRegisters();
+                    this.resetRegisters();
+                    this.pc = this.labels[operands[0]];
+                }
                 break;
             case "PUSH":
                 this.stack.push(this.resolveValue(operands[0]));
@@ -179,10 +219,15 @@ export class Executor {
                 break;
             case "CALL":
                 this.stack.push(this.pc);
+                // Preserve registers before calling label
+                this.pushRegisters();
+                this.resetRegisters();
                 this.pc = this.labels[operands[0]];
                 break;
             case "RET":
                 if (this.stack.length === 0) throw new Error("Runtime Error: Stack Underflow on RET");
+                // Restore registers when returning from label
+                this.popRegisters();
                 this.pc = this.stack.pop();
                 break;
             case "NOP":
