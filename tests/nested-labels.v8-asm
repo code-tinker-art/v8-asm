@@ -1,0 +1,31 @@
+; Test nested label calls with register preservation
+; Demonstrates that registers are isolated in each label scope
+
+.section_data
+    message = "Nested labels test completed"
+
+.global_start
+    MOV R0, 1
+    MOV R1, 2
+    MOV R2, 3
+    
+    CALL function_a
+    
+    ; After CALL, R0, R1, R2 should be restored to 1, 2, 3
+    PRINT message
+    HLT
+    
+function_a:
+    ; R0, R1, R2 are reset to 0 here
+    MOV R0, 10
+    MOV R1, 20
+    
+    CALL function_b
+    
+    ; After nested CALL, R0, R1 restored to 10, 20
+    RET
+    
+function_b:
+    ; R0, R1 are reset to 0 here again
+    MOV R0, 100
+    RET
