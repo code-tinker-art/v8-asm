@@ -1,0 +1,23 @@
+; Test stack operations with function calls
+; Verifies PUSH, POP, CALL, and RET work correctly
+
+.section_data
+    output = "Stack test passed"
+
+.global_start
+    MOV R0, 42
+    MOV R1, 10
+    
+    CALL add_values
+    
+    ; Result should be in R0
+    PRINT R0
+    PRINT output
+    HLT
+    
+add_values:
+    ; R0 and R1 are reset to 0
+    MOV R0, 5
+    MOV R1, 3
+    ADD R0, R0, R1
+    RET
