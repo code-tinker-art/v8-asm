@@ -12,6 +12,10 @@
     CALL function_a
     
     ; After CALL, R0, R1, R2 should be restored to 1, 2, 3
+    ; Verify restoration by printing register values
+    PRINT R0
+    PRINT R1
+    PRINT R2
     PRINT message
     HLT
     
