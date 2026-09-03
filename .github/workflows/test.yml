@@ -23,13 +23,13 @@ jobs:
         node-version: ${{ matrix.node-version }}
     
     - name: Run basic test (fibonacci sequence)
-      run: node main.js test.v8-asm
+      run: node main.js test.v8asm
     
     - name: Run register preservation test
-      run: node main.js tests/register-preservation.v8-asm
+      run: node main.js tests/register-preservation.v8asm
     
     - name: Run nested label test
-      run: node main.js tests/nested-labels.v8-asm
+      run: node main.js tests/nested-labels.v8asm
     
     - name: Run stack operations test
-      run: node main.js tests/stack-operations.v-8asm
+      run: node main.js tests/stack-operations.v8asm
