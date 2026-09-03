@@ -10,7 +10,7 @@
     MOV R2, 0      ; R2 is counter
     
     LOOP:
-    CMPR R2, R0
+    CMPR R0, R2
     JMPE END_LOOP
     
     ; R1 should still be 100 here after returning from label
