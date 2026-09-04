@@ -5,7 +5,7 @@
   MOV R0, 2
   CALL func_modify_r0
   PRINT R0
-  HLT
+  CALL global_test2
 
 func_modify_r0:
   MOV R0, 5
@@ -14,11 +14,11 @@ func_modify_r0:
 ;; Test 2: Flag State Preservation in Nested Calls
 ;; Before fix: equalFlag would be lost in nested calls
 ;; After fix: Should correctly restore flag state
-.global_test2
+global_test2:
   MOV R0, 10
   CMPR R0, 10
   CALL check_flag
-  HLT
+  RET
 
 check_flag:
   ;; If equalFlag was preserved, JMPE should work
@@ -27,12 +27,13 @@ check_flag:
   RET
 flag_ok:
   PRINT 1
+  CALL global_test3
   RET
 
 ;; Test 3: Division by Zero Protection
 ;; Before fix: Would silently fail or crash
 ;; After fix: Should throw clear error
-.global_test3
+global_test3:
   MOV R0, 10
   MOV R1, 0
   DIV R2, R0, R1
