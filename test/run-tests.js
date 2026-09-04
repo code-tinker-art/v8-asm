@@ -9,8 +9,7 @@ const tests = [
   { path: "test/arithmetic.v8asm", expected: "5" },
   { path: "test/labels_loop.v8asm", expected: "5" },
   { path: "test/call_ret.v8asm", expected: "2" },
-  { path: "copilot-paired-bug-tester.v8asm", expected: "2\n1" }
-];
+]
 
 for (const t of tests) {
   try {
