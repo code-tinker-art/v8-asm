@@ -1,0 +1,6 @@
+.section_data
+greeting = "hello"
+
+.global_start
+PRINT greeting
+HLT
