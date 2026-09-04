@@ -11,10 +11,10 @@ class Token {
 let tokens = [];
 
 export function tokenize(rawCode) {
-    // BUG FIX #1: Clear tokens array to prevent duplicates from multiple tokenize() calls
+    // Clear tokens array to prevent duplicates from multiple tokenize() calls
     tokens = [];
     
-    // FIX: Remove all invisible control characters, Zero-Width spaces, and unexpected BOM marks
+    // Remove invisible control characters, Zero-Width spaces, and unexpected BOM marks
     // This cleans up the string before the while loop starts analyzing it.
     let code = rawCode.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F\u00A0\u200B\uFEFF]/g, "");
 
@@ -90,6 +90,9 @@ export function tokenize(rawCode) {
 
         i++;
     }
+
+    // Return tokens so callers can use the result directly rather than relying on module state
+    return tokens;
 }
 
 export function getTokens() {
@@ -101,9 +104,10 @@ export function isDigit(n) {
 }
 
 export function isValidStringChar(char) {
-    return "abcdefghijklmnopqrstuvwxyz_".includes(char.toLowerCase());
+    // Allow letters, digits, and underscore in identifiers (fixes token-splitting of names like var1 or R0)
+    return "abcdefghijklmnopqrstuvwxyz0123456789_".includes(char.toLowerCase());
 }
 
 export function isAlphaNumericalValue(char) {
-    return "!@#$%^&*:;.,".includes(char);
+    return "!@#$%^&*:;,.".includes(char);
 }
