@@ -1,0 +1,9 @@
+.global_start
+  MOV R0, 2
+  CALL func
+  PRINT R0
+  HLT
+
+func:
+  MOV R0, 5
+  RET
