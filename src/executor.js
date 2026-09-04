@@ -54,18 +54,10 @@ export class Executor {
         }
     }
 
-    /**
-     * Saves all register values to the register stack (for function scope isolation)
-     * Call this when entering a function via CALL
-     */
     pushRegisters() {
         this.registerStack.push([...this.registers]);
     }
 
-    /**
-     * Restores all register values from the register stack (for function scope isolation)
-     * Call this when returning from a function via RET
-     */
     popRegisters() {
         if (this.registerStack.length === 0) {
             throw new Error("Runtime Error: Register stack underflow");
@@ -73,10 +65,6 @@ export class Executor {
         this.registers = this.registerStack.pop();
     }
 
-    /**
-     * Resets all registers to 0 for clean function scope
-     * Call this after CALL instruction
-     */
     resetRegisters() {
         this.registers.fill(0);
     }
@@ -86,7 +74,9 @@ export class Executor {
         if (typeof operand === "number") return operand;
         if (typeof operand === "string") {
             if (operand.startsWith("R") && !isNaN(operand.slice(1))) {
-                return this.registers[parseInt(operand.slice(1))];
+                const idx = parseInt(operand.slice(1));
+                if (idx < 0 || idx >= this.registers.length) throw new Error("Runtime Error: Invalid register " + operand);
+                return this.registers[idx];
             }
             if (this.variables[operand] !== undefined) {
                 const addr = this.variables[operand];
@@ -100,8 +90,9 @@ export class Executor {
     setValue(operand, value) {
         if (typeof operand === "string") {
             if (operand.startsWith("R") && !isNaN(operand.slice(1))) {
-                // BUG FIX #2: Remove double parseInt() - only parse once
-                this.registers[parseInt(operand.slice(1))] = value;
+                const idx = parseInt(operand.slice(1));
+                if (idx < 0 || idx >= this.registers.length) throw new Error("Runtime Error: Invalid register " + operand);
+                this.registers[idx] = value;
                 return;
             } else if (this.variables[operand] !== undefined) {
                 const addr = this.variables[operand];
@@ -129,7 +120,6 @@ export class Executor {
 
         switch (opcode) {
             case "MOV":
-                // MOV R0, 5 -> operands[0] = "R0", operands[1] = 5
                 this.setValue(operands[0], this.resolveValue(operands[1]));
                 break;
             case "LOAD":
@@ -155,11 +145,9 @@ export class Executor {
                 break;
             }
             case "ADD":
-                // ADD R3, R0, R1 -> R3 = R0 + R1
                 this.setValue(operands[0], this.resolveValue(operands[1]) + this.resolveValue(operands[2]));
                 break;
             case "SUB":
-                // SUB R3, R0, R1 -> R3 = R0 - R1
                 this.setValue(operands[0], this.resolveValue(operands[1]) - this.resolveValue(operands[2]));
                 break;
             case "MUL":
@@ -187,24 +175,21 @@ export class Executor {
                 this.setValue(operands[0], this.resolveValue(operands[1]) ^ this.resolveValue(operands[2]));
                 break;
             case "CMPR":
-                // CMPR R2, limit -> compares operands[0] and operands[1]
                 this.equalFlag = (this.resolveValue(operands[0]) === this.resolveValue(operands[1]));
                 break;
             case "JMP":
-                // BUG FIX #3 & #4: JMP does NOT preserve/reset registers
-                // JMP is for loops and simple jumps - registers should persist
-                // Only CALL/RET should handle register scope isolation
+                if (this.labels[operands[0]] === undefined) throw new Error("Runtime Error: Undefined label '" + operands[0] + "'");
                 this.pc = this.labels[operands[0]];
                 break;
             case "JMPE":
-                // BUG FIX #3 & #4: Conditional jumps also preserve register state
                 if (this.equalFlag) {
+                    if (this.labels[operands[0]] === undefined) throw new Error("Runtime Error: Undefined label '" + operands[0] + "'");
                     this.pc = this.labels[operands[0]];
                 }
                 break;
             case "JMPNE":
-                // BUG FIX #3 & #4: Conditional jumps also preserve register state
                 if (!this.equalFlag) {
+                    if (this.labels[operands[0]] === undefined) throw new Error("Runtime Error: Undefined label '" + operands[0] + "'");
                     this.pc = this.labels[operands[0]];
                 }
                 break;
@@ -216,14 +201,13 @@ export class Executor {
                 this.setValue(operands[0], this.stack.pop());
                 break;
             case "CALL":
-                // CALL preserves and resets registers for function scope isolation
+                if (this.labels[operands[0]] === undefined) throw new Error("Runtime Error: Undefined label '" + operands[0] + "'");
                 this.stack.push(this.pc);
                 this.pushRegisters();
                 this.resetRegisters();
                 this.pc = this.labels[operands[0]];
                 break;
             case "RET":
-                // RET restores registers when returning from function scope
                 if (this.stack.length === 0) throw new Error("Runtime Error: Stack Underflow on RET");
                 this.popRegisters();
                 this.pc = this.stack.pop();
@@ -242,7 +226,7 @@ export class Executor {
                         resultStr += String.fromCharCode(this.memory[addr]);
                         addr++;
                     }
-                    if (resultStr.length > 0 && this.memory[addr] === 0) {
+                    if (resultStr.length > 0) {
                         console.log(resultStr);
                     } else {
                         console.log(this.memory[this.variables[target]]);
