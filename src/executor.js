@@ -14,6 +14,7 @@ export class Executor {
         this.instructions = [];
         this.stack = [];
         this.registerStack = []; // Stack to preserve register values for function scopes only
+        this.flagStack = []; // Stack to preserve equalFlag state for function scopes
         this.halted = false;
         this.equalFlag = false;
 
@@ -63,6 +64,17 @@ export class Executor {
             throw new Error("Runtime Error: Register stack underflow");
         }
         this.registers = this.registerStack.pop();
+    }
+
+    pushFlag() {
+        this.flagStack.push(this.equalFlag);
+    }
+
+    popFlag() {
+        if (this.flagStack.length === 0) {
+            throw new Error("Runtime Error: Flag stack underflow");
+        }
+        this.equalFlag = this.flagStack.pop();
     }
 
     resetRegisters() {
@@ -134,6 +146,9 @@ export class Executor {
             }
             case "LOADI": {
                 const ptrLoadAddr = this.resolveValue(operands[1]);
+                if (ptrLoadAddr < 0 || ptrLoadAddr >= MEMORY_SIZE) {
+                    throw new Error("Runtime Error: LOADI out of bounds at address " + ptrLoadAddr);
+                }
                 this.setValue(operands[0], this.memory[ptrLoadAddr]);
                 break;
             }
@@ -141,6 +156,8 @@ export class Executor {
                 const ptrStoreAddr = this.resolveValue(operands[0]);
                 if (ptrStoreAddr >= 0 && ptrStoreAddr < MEMORY_SIZE) {
                     this.memory[ptrStoreAddr] = this.resolveValue(operands[1]);
+                } else {
+                    throw new Error("Runtime Error: STOREI out of bounds at address " + ptrStoreAddr);
                 }
                 break;
             }
@@ -153,9 +170,12 @@ export class Executor {
             case "MUL":
                 this.setValue(operands[0], this.resolveValue(operands[1]) * this.resolveValue(operands[2]));
                 break;
-            case "DIV":
-                this.setValue(operands[0], Math.floor(this.resolveValue(operands[1]) / this.resolveValue(operands[2])));
+            case "DIV": {
+                const divisor = this.resolveValue(operands[2]);
+                if (divisor === 0) throw new Error("Runtime Error: Division by zero");
+                this.setValue(operands[0], Math.floor(this.resolveValue(operands[1]) / divisor));
                 break;
+            }
             case "INCR":
                 this.setValue(operands[0], this.resolveValue(operands[0]) + 1);
                 break;
@@ -204,11 +224,12 @@ export class Executor {
                 if (this.labels[operands[0]] === undefined) throw new Error("Runtime Error: Undefined label '" + operands[0] + "'");
                 this.stack.push(this.pc);
                 this.pushRegisters();
-                this.resetRegisters();
+                this.pushFlag();
                 this.pc = this.labels[operands[0]];
                 break;
             case "RET":
                 if (this.stack.length === 0) throw new Error("Runtime Error: Stack Underflow on RET");
+                this.popFlag();
                 this.popRegisters();
                 this.pc = this.stack.pop();
                 break;
