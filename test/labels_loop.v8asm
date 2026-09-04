@@ -1,0 +1,10 @@
+.global_start
+    MOV R0, 0
+loop:
+    INCR R0
+    CMPR R0, 5
+    JMPE end
+    JMP loop
+end:
+   PRINT R0
+   HLT
